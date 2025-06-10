@@ -1,3 +1,6 @@
+@extends('layouts.admin')
+
+@section('content')
 <div class="container mt-4">
     <div class="row">
         <!-- Posts Section -->
@@ -94,13 +97,16 @@ $(document).ready(function() {
         if(confirm('Are you sure you want to delete this post?')) {
             const postId = $(this).data('id');
             $.ajax({
-                url: `/admin/content/posts/${postId}`,
+                url: "{{ route('admin.content.destroy', '') }}/" + postId,
                 method: 'DELETE',
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
                 success: function() {
                     window.location.reload();
+                },
+                error: function(xhr) {
+                    alert('Error: ' + xhr.responseJSON.message);
                 }
             });
         }
@@ -111,13 +117,16 @@ $(document).ready(function() {
         if(confirm('Are you sure you want to delete this comment?')) {
             const commentId = $(this).data('id');
             $.ajax({
-                url: `/admin/content/comments/${commentId}`,
+                url: "{{ route('admin.content.comments.destroy', '') }}/" + commentId,
                 method: 'DELETE',
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
                 success: function() {
                     window.location.reload();
+                },
+                error: function(xhr) {
+                    alert('Error: ' + xhr.responseJSON.message);
                 }
             });
         }
@@ -125,3 +134,4 @@ $(document).ready(function() {
 });
 </script>
 @endpush
+@endsection

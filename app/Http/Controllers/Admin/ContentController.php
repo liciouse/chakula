@@ -58,7 +58,7 @@ class ContentController extends Controller
                 'slug' => Str::slug($validated['title']),
                 'content' => $validated['content'],
                 'excerpt' => $validated['excerpt'],
-                'user_id' => auth()->id,
+                'user_id' => auth()->id(),
                 'featured_image' => $this->storeFeaturedImage($request),
                 'status' => $validated['status'],
             ]);

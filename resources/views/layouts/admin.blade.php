@@ -8,6 +8,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Toastr CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
@@ -36,58 +38,22 @@
         .navbar-nav .nav-item {
             margin: 0 5px;
         }
+        #logout-form button {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,.55);
+            padding: 0.5rem 1rem;
+            text-decoration: none;
+            transition: color .15s ease-in-out;
+        }
+        #logout-form button:hover {
+            color: rgba(255,255,255,.75);
+        }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{{ route('admin.dashboard') }}">
-                <i class="fas fa-utensils me-2"></i>Food Blog Admin
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" 
-                           href="{{ route('admin.dashboard') }}">
-                           <i class="fas fa-tachometer-alt me-1"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.users*') ? 'active' : '' }}" 
-                           href="{{ route('admin.users.index') }}">
-                           <i class="fas fa-users me-1"></i> Manage Users
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.content*') ? 'active' : '' }}" 
-                           href="{{ route('admin.content.index') }}">
-                           <i class="fas fa-newspaper me-1"></i> Manage Content
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.settings*') ? 'active' : '' }}" 
-                           href="{{ route('admin.settings.index') }}">
-                           <i class="fas fa-cog me-1"></i> System Settings
-                        </a>
-                    </li>
-                </ul>
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <form method="POST" action="{{ route('logout') }}" id="logout-form">
-                            @csrf
-                            <button type="submit" class="btn btn-link nav-link">
-                                <i class="fas fa-sign-out-alt me-1"></i> Logout
-                            </button>
-                        </form>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
+    @yield('navbar')
+    
     <div class="loading-overlay">
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
@@ -99,24 +65,33 @@
     </div>
 
     <!-- JavaScript Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Toastr for notifications -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
 
     <script>
         $(document).ready(function() {
+            // Setup CSRF token for all AJAX requests
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+
             // Initialize tooltips
             $('[data-bs-toggle="tooltip"]').tooltip();
             
-            // Handle navigation clicks
-            $(document).on('click', '.nav-link:not(.disabled)', function(e) {
-                if ($(this).attr('href') === '#') return;
+            // Handle navigation clicks (excluding logout)
+            $(document).on('click', '.nav-link:not(.disabled):not([data-logout="true"])', function(e) {
+                // Skip if it's a form button or has no href
+                if ($(this).is('button') || $(this).attr('href') === '#' || !$(this).attr('href')) {
+                    return;
+                }
                 
                 e.preventDefault();
                 const url = $(this).attr('href');
-                const route = $(this).data('route') || $(this).attr('href').split('/').pop();
+                const route = url.split('/').pop() || 'dashboard';
                 
                 // Show loading overlay
                 $('.loading-overlay').show();
@@ -135,10 +110,18 @@
                     success: function(response) {
                         $('#app-content').html(response);
                         document.title = 'Food Blog Admin | ' + route.charAt(0).toUpperCase() + route.slice(1);
+                        
+                        // Reinitialize tooltips for new content
+                        $('[data-bs-toggle="tooltip"]').tooltip();
                     },
                     error: function(xhr) {
-                        console.error(xhr);
-                        toastr.error('Error loading page. Please try again.');
+                        console.error('Navigation Error:', xhr);
+                        if (xhr.status === 419) {
+                            toastr.error('Session expired. Please refresh the page.');
+                        } else {
+                            console.log("Page Loading Error: ", xhr)
+                            toastr.error('Error loading page. Please try again.');
+                        }
                     },
                     complete: function() {
                         $('.loading-overlay').hide();
@@ -160,11 +143,22 @@
                     url: $(this).attr('action'),
                     type: 'POST',
                     data: $(this).serialize(),
-                    success: function() {
-                        window.location.href = '/login';
+                    success: function(response) {
+                        toastr.success('Logged out successfully');
+                        setTimeout(function() {
+                            window.location.href = '/login';
+                        }, 1000);
                     },
-                    error: function() {
-                        window.location.href = '/login';
+                    error: function(xhr) {
+                        console.error('Logout Error:', xhr);
+                        // Even on error, redirect to login (logout might have succeeded)
+                        toastr.info('Redirecting to login...');
+                        setTimeout(function() {
+                            window.location.href = '/login';
+                        }, 1000);
+                    },
+                    complete: function() {
+                        $('.loading-overlay').hide();
                     }
                 });
             });
@@ -174,14 +168,79 @@
                 const path = window.location.pathname;
                 $('.nav-link').each(function() {
                     const linkPath = $(this).attr('href');
-                    if (path.includes(linkPath.split('/admin/')[1])) {
+                    if (linkPath && linkPath !== '#' && path === linkPath) {
+                        $('.nav-link').removeClass('active');
                         $(this).addClass('active');
                     }
                 });
             }
             
+            // Configure Toastr options
+            toastr.options = {
+                "closeButton": true,
+                "debug": false,
+                "newestOnTop": false,
+                "progressBar": true,
+                "positionClass": "toast-top-right",
+                "preventDuplicates": false,
+                "onclick": null,
+                "showDuration": "300",
+                "hideDuration": "1000",
+                "timeOut": "5000",
+                "extendedTimeOut": "1000",
+                "showEasing": "swing",
+                "hideEasing": "linear",
+                "showMethod": "fadeIn",
+                "hideMethod": "fadeOut"
+            };
+            
             setInitialActiveState();
+            
+            // Handle any flash messages from Laravel
+            @if(session('success'))
+                toastr.success('{{ session('success') }}');
+            @endif
+            
+            @if(session('error'))
+                toastr.error('{{ session('error') }}');
+            @endif
+            
+            @if(session('warning'))
+                toastr.warning('{{ session('warning') }}');
+            @endif
+            
+            @if(session('info'))
+                toastr.info('{{ session('info') }}');
+            @endif
+        });
+        
+        // Global function to show loading
+        function showLoading() {
+            $('.loading-overlay').show();
+        }
+        
+        // Global function to hide loading
+        function hideLoading() {
+            $('.loading-overlay').hide();
+        }
+        
+        // Global AJAX error handler
+        $(document).ajaxError(function(event, xhr, settings) {
+            if (xhr.status === 419) {
+                toastr.error('CSRF token mismatch. Please refresh the page.');
+            } else if (xhr.status === 401) {
+                toastr.error('Unauthorized. Please login again.');
+                setTimeout(function() {
+                    window.location.href = '/login';
+                }, 2000);
+            } else if (xhr.status === 403) {
+                toastr.error('Access denied.');
+            } else if (xhr.status === 500) {
+                toastr.error('Server error. Please try again later.');
+            }
         });
     </script>
+    
+    @stack('scripts')
 </body>
 </html>

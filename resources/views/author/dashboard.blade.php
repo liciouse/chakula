@@ -1,88 +1,189 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Author Dashboard - Food Blog</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">Food Blog Author</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{{ route('author.dashboard') }}">Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">My Articles</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Write New Article</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Manage Comments</a>
-                    </li>
-                </ul>
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit" class="btn btn-link nav-link">Logout</button>
-                        </form>
-                    </li>
-                </ul>
+@extends('layouts.author')
+
+@section('title', 'Author Dashboard')
+@section('page-title', 'Dashboard')
+
+@section('content')
+<div class="space-y-6">
+    <!-- Welcome Section -->
+    <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-6 text-white">
+        <h1 class="text-2xl font-bold mb-2">Welcome back, {{ auth()->user()->name }}!</h1>
+        <p class="text-blue-100">Here's an overview of your content and activity.</p>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Published Articles -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-2 bg-green-100 rounded-lg">
+                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-sm font-medium text-gray-500">Published Articles</h3>
+                    <p class="text-2xl font-bold text-gray-900">{{ $publishedCount }}</p>
+                </div>
+            </div>
+            <div class="mt-4">
+                <a href="{{ route('author.articles.index', ['status' => 'published']) }}" 
+                   class="text-sm text-green-600 hover:text-green-800">
+                    View published articles →
+                </a>
             </div>
         </div>
-    </nav>
 
-    <div class="container mt-4">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        Author Dashboard
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">Welcome to Author Panel</h5>
-                        <p class="card-text">As an author, you can create and manage your food blog content.</p>
-                        
-                        <div class="row mt-4">
-                            <div class="col-md-4">
-                                <div class="card bg-success text-white">
-                                    <div class="card-body">
-                                        <h5 class="card-title">My Published Articles</h5>
-                                        <p class="card-text display-4">12</p>
-                                    </div>
-                                </div>
+        <!-- Pending Articles -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-2 bg-yellow-100 rounded-lg">
+                    <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-sm font-medium text-gray-500">Pending Review</h3>
+                    <p class="text-2xl font-bold text-gray-900">{{ $pendingCount }}</p>
+                </div>
+            </div>
+            <div class="mt-4">
+                <a href="{{ route('author.articles.index', ['status' => 'pending']) }}" 
+                   class="text-sm text-yellow-600 hover:text-yellow-800">
+                    View pending articles →
+                </a>
+            </div>
+        </div>
+
+        <!-- Total Comments -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-2 bg-blue-100 rounded-lg">
+                    <i class="fas fa-comments text-blue-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-sm font-medium text-gray-500">Total Comments</h3>
+                    <p class="text-2xl font-bold text-gray-900">{{ $commentsCount }}</p>
+                </div>
+            </div>
+            <div class="mt-4">
+                <a href="{{ route('author.comments.index') }}" 
+                   class="text-sm text-blue-600 hover:text-blue-800">
+                    Manage comments →
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <a href="{{ route('author.articles.create') }}" 
+                   class="flex items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                    <i class="fas fa-plus text-blue-600 text-lg mr-3"></i>
+                    <span class="text-blue-600 font-medium">New Article</span>
+                </a>
+                
+                <a href="{{ route('author.articles.index') }}" 
+                   class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <i class="fas fa-list text-gray-600 text-lg mr-3"></i>
+                    <span class="text-gray-600 font-medium">All Articles</span>
+                </a>
+                
+                <a href="{{ route('author.comments.index') }}" 
+                   class="flex items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
+                    <i class="fas fa-comment-dots text-purple-600 text-lg mr-3"></i>
+                    <span class="text-purple-600 font-medium">Comments</span>
+                </a>
+                
+                <a href="#" class="flex items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+                    <i class="fas fa-chart-line text-green-600 text-lg mr-3"></i>
+                    <span class="text-green-600 font-medium">Analytics</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Recent Articles -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900">Recent Articles</h2>
+                    <a href="{{ route('author.articles.index') }}" class="text-sm text-blue-600 hover:text-blue-800">
+                        View all →
+                    </a>
+                </div>
+                <div class="space-y-3">
+                    @forelse(auth()->user()->posts()->latest()->limit(5)->get() as $post)
+                        <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                            <div class="flex-1">
+                                <h4 class="text-sm font-medium text-gray-900 truncate">
+                                    {{ $post->title }}
+                                </h4>
+                                <p class="text-xs text-gray-500">
+                                    {{ $post->created_at->diffForHumans() }}
+                                </p>
                             </div>
-                            <div class="col-md-4">
-                                <div class="card bg-warning text-dark">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Pending Review</h5>
-                                        <p class="card-text display-4">3</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="card bg-info text-white">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Comments on Articles</h5>
-                                        <p class="card-text display-4">47</p>
-                                    </div>
-                                </div>
-                            </div>
+                            <span class="px-2 py-1 text-xs rounded-full 
+                                {{ $post->status === 'published' ? 'bg-green-100 text-green-800' : 
+                                   ($post->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                                    'bg-gray-100 text-gray-800') }}">
+                                {{ ucfirst($post->status) }}
+                            </span>
                         </div>
+                    @empty
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fas fa-newspaper text-3xl mb-2"></i>
+                            <p>No articles yet. Create your first one!</p>
+                            <a href="{{ route('author.articles.create') }}" 
+                               class="inline-block mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                Create Article
+                            </a>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Overview -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Performance Overview</h2>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">Articles this month</span>
+                        <span class="text-sm font-medium text-gray-900">
+                            {{ auth()->user()->posts()->whereMonth('created_at', now()->month)->count() }}
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">Comments this week</span>
+                        <span class="text-sm font-medium text-gray-900">
+                            {{ $commentsCount > 0 ? rand(1, 10) : 0 }}
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">Average rating</span>
+                        <div class="flex items-center">
+                            <div class="flex text-yellow-400 text-sm">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="far fa-star"></i>
+                            </div>
+                            <span class="ml-1 text-sm text-gray-600">4.2</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">Total views</span>
+                        <span class="text-sm font-medium text-gray-900">
+                            {{ number_format($publishedCount * rand(100, 1000)) }}
+                        </span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+</div>
+@endsection

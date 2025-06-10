@@ -11,16 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('posts', function (Blueprint $table) {
+        Schema::create('likes', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
-            $table->text('content');
-            $table->string('slug')->unique();
-            $table->string('featured_image')->nullable();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('status')->default('draft'); // draft, published, archived
-            $table->timestamp('published_at')->nullable();
+            $table->foreignId('post_id')->constrained()->onDelete('cascade');
             $table->timestamps();
+            
+            // Prevent duplicate likes from same user on same post
+            $table->unique(['user_id', 'post_id']);
         });
     }
 
@@ -29,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('posts');
+        Schema::dropIfExists('likes');
     }
 };

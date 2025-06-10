@@ -1,90 +1,85 @@
-<div class="container mt-4">
-    <div class="card">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <span>User Management</span>
-            <a href="{{ route('admin.users.create') }}" class="btn btn-sm btn-light">Add New User</a>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-striped table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Joined</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($users as $user)
-                        <tr>
-                            <td>{{ $user->id }}</td>
-                            <td>{{ $user->name }}</td>
-                            <td>{{ $user->email }}</td>
-                            <td>
-                                <span class="badge bg-{{ $user->getRoleColor() }}">
-                                    {{ ucfirst($user->getRoleNames()->first() ?? 'user') }}
-                                </span>
-                            </td>
-                            <td>{{ $user->created_at->format('M d, Y') }}</td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <a href="{{ route('admin.users.edit', $user->id) }}" 
-                                       class="btn btn-outline-primary">Edit</a>
-                                    <button class="btn btn-outline-danger delete-user" 
-                                            data-id="{{ $user->id }}">Delete</button>
-                                </div>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="6" class="text-center py-4">No users found</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+@extends('layouts.admin')
+
+@section('content')
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">User Management</h3>
+                    <div class="card-tools">
+                        <a href="{{ route('admin.users.create') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> Add New User
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Joined</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($users as $user)
+                                    <tr>
+                                        <td>{{ $user->id }}</td>
+                                        <td>{{ $user->name }}</td>
+                                        <td>{{ $user->email }}</td>
+                                        <td>{{ $user->roles && $user->roles->isNotEmpty() ? $user->roles->first()->name : 'User' }}</td>
+                                        <td>{{ $user->created_at->format('M d, Y') }}</td>
+                                        <td>
+                                            <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-info btn-sm">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                            <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this user?')">
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    {{ $users->links() }}
+                </div>
             </div>
-            @if($users->hasPages())
-            <div class="card-footer">
-                {{ $users->links() }}
-            </div>
-            @endif
         </div>
     </div>
 </div>
+@endsection
 
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Handle user deletion
-    $('.delete-user').click(function() {
-        const userId = $(this).data('id');
-        const url = "{{ route('admin.users.destroy', ':id') }}".replace(':id', userId);
-        
-        if(confirm('Are you sure you want to delete this user?')) {
-            $.ajax({
-                url: url,
-                type: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(response) {
-                    if(response.success) {
-                        toastr.success(response.message);
-                        $.ajax({
-                            url: "{{ route('admin.users.index') }}",
-                            type: "GET",
-                            success: function(content) {
-                                $('#app-content').html(content);
-                            }
-                        });
-                    } else {
-                        toastr.error(response.message);
-                    }
-                }
-            });
+    // Handle post deletion
+    $('.delete-post').click(function() {
+        if(confirm('Are you sure you want to delete this post?')) {
+            const postId = $(this).data('id');
+            $('.loading-overlay').show();
+            
+        }
+    });
+
+    // Handle comment deletion
+    $('.delete-comment').click(function() {
+        if(confirm('Are you sure you want to delete this comment?')) {
+            const commentId = $(this).data('id');
+            $('.loading-overlay').show();
+            
+            
         }
     });
 });

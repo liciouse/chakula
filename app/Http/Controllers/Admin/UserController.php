@@ -25,6 +25,8 @@ class UserController extends Controller
             $view = request()->ajax() 
                 ? 'admin.users.content' 
                 : 'admin.users.index';
+
+            // $view = 'admin.users.index';
                 
             return view($view, compact('users'));
             

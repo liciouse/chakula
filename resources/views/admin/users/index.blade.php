@@ -1,5 +1,7 @@
 @extends('layouts.admin')
 
+@include('layouts.admin-nav')
+
 @section('content')
 <div class="container-fluid">
     <div class="row">
